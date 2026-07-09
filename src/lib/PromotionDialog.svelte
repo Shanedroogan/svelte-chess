@@ -1,15 +1,17 @@
 <script lang="ts">
 	import type { Square, Color, PieceSymbol } from '$lib/api.js';
 
-	export let square: Square;
-	export let orientation: Color = 'w';
-	export let callback: (promotion: PieceSymbol) => void;
-	let className: string | undefined = undefined;
-	export { className as class };
+	interface Props {
+		square: Square;
+		orientation?: Color;
+		callback: (promotion: PieceSymbol) => void;
+		class?: string;
+	}
+	let { square, orientation = 'w', callback, class: className = undefined }: Props = $props();
 
-	const marginLeft = 100 / 8 * ( orientation === 'w' ? squareToFileNumber(square) : 7 - squareToFileNumber(square) );
-	const white = square.charAt(1) === '8';
-	const black = ! white;
+	const marginLeft = $derived( 100 / 8 * ( orientation === 'w' ? squareToFileNumber(square) : 7 - squareToFileNumber(square) ) );
+	const white = $derived( square.charAt(1) === '8' );
+	const black = $derived( ! white );
 
 	const pieces: PieceSymbol[] = ['q','n','r','b'];
 	const pieceNames: { [key in PieceSymbol]: string } = { q: 'queen', n: 'knight', r: 'rook', b: 'bishop', p: 'pawn', k: 'king' };
@@ -28,14 +30,14 @@
 </script>
 
 <div class="dialog {className}">
-	{#each pieces as piece, i}
+	{#each pieces as piece, i (piece)}
 		{@const putPiecesFromTop = white && orientation === 'w' || black && orientation === 'b'}
 		{@const marginTop = putPiecesFromTop ? i * 12.5 : 100 - 12.5*(i+1)}
 		<div class="square" style="margin-left:{marginLeft}%;margin-top:{marginTop}%;">
 			<div
 				class="piece {piece}" class:white class:black
-				on:click={()=>callback(piece)}
-				on:keydown={(e)=>keyboardCallback(e,piece)}
+				onclick={()=>callback(piece)}
+				onkeydown={(e)=>keyboardCallback(e,piece)}
 				role="button" tabindex="0" aria-label="Promote to {pieceNames[piece]}"
 			></div>
 		</div>

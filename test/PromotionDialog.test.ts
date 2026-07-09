@@ -1,4 +1,5 @@
 import PromotionDialog from '../src/lib/PromotionDialog.svelte';
+import type { Square, Color } from '../src/lib/api.js';
 import { render, screen, fireEvent, waitFor } from '@testing-library/svelte';
 
 describe("PromotionDialog Component", () => {
@@ -6,7 +7,7 @@ describe("PromotionDialog Component", () => {
 	test("all four piece options displayed", () => {
 		render( PromotionDialog, {
 			square: 'a1',
-			callback: (piece: PieceSymbol) => {},
+			callback: () => {},
 		});
 		const queen  = screen.getByRole( 'button', { name: /queen/ } );
 		const knight = screen.getByRole( 'button', { name: /knight/ } );
@@ -25,7 +26,7 @@ describe("PromotionDialog Component", () => {
 	test("1st rank promotion shows black pieces", () => {
 		render( PromotionDialog, {
 			square: 'a1',
-			callback: (piece: PieceSymbol) => {},
+			callback: () => {},
 		});
 		expect( screen.getByRole( 'button', { name: /queen/ } ).className.split(' ') ).toContain( 'black' );
 		expect( screen.getByRole( 'button', { name: /queen/ } ).className.split(' ') ).toContain( 'black' );
@@ -36,7 +37,7 @@ describe("PromotionDialog Component", () => {
 	test("8th rank promotion shows white pieces", () => {
 		render( PromotionDialog, {
 			square: 'a8',
-			callback: (piece: PieceSymbol) => {},
+			callback: () => {},
 		});
 		expect( screen.getByRole( 'button', { name: /queen/ } ).className.split(' ') ).toContain( 'white' );
 		expect( screen.getByRole( 'button', { name: /queen/ } ).className.split(' ') ).toContain( 'white' );
@@ -78,14 +79,14 @@ describe("button positions", () => {
 		{ square: 'h1', orientation: 'b', marginLeft: '0%',    marginsTop: ['0%','12.5%','25%','37.5%'] },
 	])( 'button positions for promotion $square, $orientation orientation', async ({square,orientation,marginLeft,marginsTop}) => {
 		render( PromotionDialog, {
-			square,
-			orientation,
-			callback: (piece: PieceSymbol) => {},
+			square: square as Square,
+			orientation: orientation as Color,
+			callback: () => {},
 		});
-		const queenStyle  = screen.getByRole( 'button', { name: /queen/  } ).parentElement.style;
-		const knightStyle = screen.getByRole( 'button', { name: /knight/ } ).parentElement.style;
-		const rookStyle   = screen.getByRole( 'button', { name: /rook/   } ).parentElement.style;
-		const bishopStyle = screen.getByRole( 'button', { name: /bishop/ } ).parentElement.style;
+		const queenStyle  = screen.getByRole( 'button', { name: /queen/  } ).parentElement!.style;
+		const knightStyle = screen.getByRole( 'button', { name: /knight/ } ).parentElement!.style;
+		const rookStyle   = screen.getByRole( 'button', { name: /rook/   } ).parentElement!.style;
+		const bishopStyle = screen.getByRole( 'button', { name: /bishop/ } ).parentElement!.style;
 		expect(  queenStyle.marginTop ).toEqual( marginsTop[0] );
 		expect( knightStyle.marginTop ).toEqual( marginsTop[1] );
 		expect(   rookStyle.marginTop ).toEqual( marginsTop[2] );

@@ -1,35 +1,32 @@
 <script lang="ts">
-	import Chess, { type MoveEvent, type GameOverEvent } from '$lib/Chess.svelte';
+	import Chess, { type Move, type GameOver } from '$lib/Chess.svelte';
 	import { flip } from 'svelte/animate' ;
 	import { fade } from 'svelte/transition';
 
-	let messages: {title:string, details:string}[] = [];
-	function moveHandler( event: MoveEvent ) {
+	let messages: {title:string, details:string}[] = $state([]);
+	function moveHandler( move: Move ) {
 		messages.unshift( {
-			title: "MoveEvent: " + event.detail.san,
-			details: JSON.stringify(event.detail, null, 2)
+			title: "move: " + move.san,
+			details: JSON.stringify(move, null, 2)
 		} );
-		messages = messages;
 	}
-	function gameOverHandler( event: GameOverEvent ) {
+	function gameOverHandler( gameOver: GameOver ) {
 		messages.unshift( {
-			title: "GameOverEvent: " + event.detail.reason,
-			details: JSON.stringify(event.detail, null, 2)
+			title: "gameOver: " + gameOver.reason,
+			details: JSON.stringify(gameOver, null, 2)
 		} );
-		messages = messages;
 	}
-	function readyHandler( event: CustomEvent<{}> ) {
+	function readyHandler() {
 		messages.unshift( {
-			title: "Ready Event",
+			title: "ready",
 			details: ""
 		} );
-		messages = messages;
 	}
 </script>
 
 <div style="max-width:512px;margin:0 auto;">
-	<p>This example listens for <code>move</code> and <code>gameOver</code> events.</p>
-	<Chess on:move={moveHandler} on:gameOver={gameOverHandler} on:ready={readyHandler} />
+	<p>This example listens for <code>move</code> and <code>gameOver</code> callbacks.</p>
+	<Chess onmove={moveHandler} ongameOver={gameOverHandler} onready={readyHandler} />
 </div>
 	<div class="messages">
 		{#each messages as message (message.details)}

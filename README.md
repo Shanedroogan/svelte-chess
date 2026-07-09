@@ -94,39 +94,38 @@ Example implementing undo/reset buttons ([REPL](https://svelte.dev/repl/7dd7b645
         let chess;
     </script>    
     <Chess bind:this={chess}/>
-    <button on:click={()=>chess?.reset()}>Reset</button>
-    <button on:click={()=>chess?.undo()}>Undo</button>
+    <button onclick={()=>chess?.reset()}>Reset</button>
+    <button onclick={()=>chess?.undo()}>Undo</button>
 
-### Events
+### Event callbacks
 
-A `ready` event is dispatched when the Chess component is ready for interaction,
+The `onready` callback is called when the Chess component is ready for interaction,
 which is generally immediately on mount. If an [engine](#engine--stockfish) was
-specified, the event is dispatched after engine initialisation, which might take
+specified, it is called after engine initialisation, which might take
 a second.
 
-A `move` event is dispatched after every move, containing the corresponding [Move object](#move).
+The `onmove` callback is called after every move, with the corresponding [Move object](#move).
 
-A `gameOver` event is emitted after a move that ends the game. The GameOver object has two keys:
+The `ongameOver` callback is called after a move that ends the game, with a GameOver object with two keys:
 * `reason`: `checkmate`, `stalemate`, `repetition`, `insufficient material` or `fifty-move rule`.
 * `result`: 1 for White win, 0 for Black win, or 0.5 for a draw.
 
-A `uci` event is emitted when Stockfish, if enabled, sends a UCI message.
+The `onuci` callback is called when Stockfish, if enabled, sends a UCI message.
 
-Example listening for `move` and `gameOver` events ([REPL](https://svelte.dev/repl/6fc2874d1a594d76aede4834722e4f83?version=3.59.1)):
+Example listening for `move` and `gameOver` events:
 
     <script>
         import {Chess} from 'svelte-chess';
-        function moveListener(event) {
-            const move = event.detail;
+        function moveListener(move) {
             console.log( `${move.color} played ${move.san}` );
         }
-        function gameOverListener(event) {
-            console.log( `The game ended due to ${event.detail.reason}` );
+        function gameOverListener(gameOver) {
+            console.log( `The game ended due to ${gameOver.reason}` );
         }
     </script>
-    <Chess on:move={moveListener} on:gameOver={gameOverListener} />
+    <Chess onmove={moveListener} ongameOver={gameOverListener} />
 
-Svelte-chess exports the MoveEvent, GameOverEvent, ReadyEvent and UciEvent types.
+Svelte-chess exports the Move and GameOver types.
 
 ### Engine / Stockfish
 

@@ -1,5 +1,5 @@
 import Chess from '../src/lib/Chess.svelte';
-import { render, screen, fireEvent, waitFor } from '@testing-library/svelte';
+import { render } from '@testing-library/svelte';
 
 describe("Chess Component basic usage", () => {
 

@@ -1,9 +1,9 @@
 <script lang="ts">
 	import Chess from '$lib/Chess.svelte';
 	import { onMount } from 'svelte';
-	let chess: Chess;
+	let chess: ReturnType<typeof Chess> | undefined;
 	onMount( () => {
-		chess.toggleOrientation();
+		chess?.toggleOrientation();
 	} );
 </script>
 

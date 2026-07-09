@@ -108,7 +108,7 @@ export class Engine {
 				throw new Error('Engine not initialised');
 			if ( this.state !== State.Searching )
 				resolve();
-			this.onBestMove = ( uci: string ) => {
+			this.onBestMove = () => {
 				this.state = State.Waiting;
 				this.onBestMove = undefined;
 				resolve();

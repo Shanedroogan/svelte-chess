@@ -1,42 +1,53 @@
-<script lang="ts" context="module">
-	export type GameOverEvent = CustomEvent<GameOver>;
-	export type MoveEvent = CustomEvent<Move>;
-	export type UciEvent = CustomEvent<string>;
-	export type { Square, Color, PieceSymbol, Move, GameOver };
+<script lang="ts" module>
+	export type { Square, Color, PieceSymbol, Move, GameOver } from '$lib/api.js';
 	export { Engine } from '$lib/engine.js';
 </script>
 <script lang="ts">
-	import { Chessground } from 'svelte-chessground';
+	import Board from '$lib/Board.svelte';
 	import PromotionDialog from '$lib/PromotionDialog.svelte';
 	import { Api, type Square, type Color, type PieceSymbol, type Move, type GameOver } from '$lib/api.js';
 	import type { Engine } from '$lib/engine.js';
 
-	import { onMount, createEventDispatcher } from 'svelte';
+	import { onMount, mount, unmount } from 'svelte';
 
-	const dispatch = createEventDispatcher<{ move: Move, gameOver: GameOver, ready: {}, uci: string }>();
+	interface Props {
+		// bindable read-only props
+		moveNumber?: number;
+		turn?: Color;
+		inCheck?: boolean;
+		history?: string[];
+		isGameOver?: boolean;
+		// initial values used, also bindable
+		fen?: string;
+		orientation?: Color;
+		// non-bindable
+		engine?: Engine;
+		class?: string;
+		// event callbacks
+		onmove?: ( move: Move ) => void;
+		ongameOver?: ( gameOver: GameOver ) => void;
+		onready?: () => void;
+		onuci?: ( message: string ) => void;
+	}
 
-	let chessground: Chessground;
+	let {
+		moveNumber = $bindable(0),
+		turn = $bindable('w'),
+		inCheck = $bindable(false),
+		history = $bindable([]),
+		isGameOver = $bindable(false),
+		fen = $bindable('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'),
+		orientation = $bindable('w'),
+		engine = undefined,
+		class: className = undefined,
+		onmove = undefined,
+		ongameOver = undefined,
+		onready = undefined,
+		onuci = undefined,
+	}: Props = $props();
+
+	let board: ReturnType<typeof Board>;
 	let container: HTMLElement;
-
-	/*
-	 * Props
-	 */
-
-	// bindable read-only props
-	export let moveNumber = 0;
-	export let turn: Color = 'w';
-	export let inCheck = false;
-	export let history: string[] = [];
-	export let isGameOver = false;
-
-	// Initial values used, also bindable
-	export let fen = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
-	export let orientation: Color = 'w';
-
-	// non-bindable
-	export let engine: Engine | undefined = undefined;
-	let className: string | undefined = undefined;
-	export { className as class };
 
 	// API: only accessible through props and methods
 	let api: Api | undefined = undefined;
@@ -98,13 +109,13 @@
 
 	function promotionCallback( square: Square ): Promise<PieceSymbol> {
 		return new Promise((resolve) => {
-			const element = new PromotionDialog({
+			const dialog = mount( PromotionDialog, {
 				target: container,
-				props: { 
+				props: {
 					square,
 					orientation,
 					callback: (piece: PieceSymbol) => {
-						element.$destroy();
+						unmount( dialog );
 						resolve( piece );
 					}
 				},
@@ -113,26 +124,25 @@
 	}
 
 	function moveCallback( move: Move ) {
-		dispatch( 'move', move );
+		onmove?.( move );
 	}
 	function gameOverCallback( gameOver: GameOver ) {
-		dispatch( 'gameOver', gameOver );
+		ongameOver?.( gameOver );
 	}
 
 	onMount( async () => {
 		if ( engine ) {
-			engine.setUciCallback( (message) => dispatch( 'uci', message ) );
+			engine.setUciCallback( (message) => onuci?.( message ) );
 		}
-		api = new Api( chessground, fen, stateChangeCallback, promotionCallback, moveCallback, gameOverCallback, orientation, engine );
+		api = new Api( board.getApi(), fen, stateChangeCallback, promotionCallback, moveCallback, gameOverCallback, orientation, engine );
 		api.init().then( () => {
-			// Dispatch ready-event: Simply letting the parent observe when the component is mounted is not enough due to async onMount.
-			dispatch( 'ready' ); 
+			// Call onready: Simply letting the parent observe when the component is mounted is not enough due to async onMount.
+			onready?.();
 		} );
 	} );
-	
+
 </script>
 
 <div style="position:relative;" bind:this={container}>
-	<Chessground bind:this={chessground} class={className}/>
+	<Board bind:this={board} class={className}/>
 </div>
-

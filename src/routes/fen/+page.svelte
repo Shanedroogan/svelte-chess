@@ -1,6 +1,6 @@
 <script lang="ts">
 	import Chess from '$lib/Chess.svelte';
-	let chess: Chess;
+	let chess: ReturnType<typeof Chess> | undefined;
 
 	const fens = [
 		'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
@@ -14,8 +14,8 @@
 
 <div style="max-width:512px;margin:0 auto;">
 	<Chess bind:this={chess}/>
-	{#each fens as fen, i}
-		<button on:click={()=>{chess.load(fen)}}>{i}</button>
+	{#each fens as fen, i (fen)}
+		<button onclick={()=>{chess?.load(fen)}}>{i}</button>
 	{/each}
 </div>
 

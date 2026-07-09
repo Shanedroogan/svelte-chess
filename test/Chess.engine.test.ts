@@ -5,9 +5,8 @@
 //   b) integration tests with actual web worker.
 
 import Chess from '../src/lib/Chess.svelte';
-import type { Move } from '../src/lib/Chess.svelte';
 import { Engine } from '../src/lib/engine.js';
-import { render, screen, waitFor, act } from '@testing-library/svelte';
+import { render, waitFor } from '@testing-library/svelte';
 import '@vitest/web-worker';
 
 describe("Engine auto-plays moves", async () => {
@@ -17,12 +16,11 @@ describe("Engine auto-plays moves", async () => {
 			color: 'w',
 			moveTime: 50,
 		});
-		const { component } = render( Chess, { props: { engine } } );
-		component.$on( 'move', (event) => {
+		const { component } = render( Chess, { props: { engine, onmove: () => {
 			if ( component.getHistory().length == 1 ) {
 				component.move('g6');
 			}
-		} );
+		} } } );
 		await waitFor( () => expect( component.getHistory() ).toHaveLength(3), { timeout: 10e3 } );
 	});
 	test( 'Auto-plays second and fourth half-moves as Black', async () => {
@@ -31,13 +29,14 @@ describe("Engine auto-plays moves", async () => {
 			color: 'b',
 			moveTime: 50,
 		});
-		const { component } = render( Chess, { props: { engine } } );
-		component.$on( 'ready', () => component.move('g3') );
-		component.$on( 'move', (event) => {
-			if ( component.getHistory().length == 2 ) {
-				component.move('Bg2');
-			}
-		} );
+		const { component } = render( Chess, { props: { engine,
+			onready: () => component.move('g3'),
+			onmove: () => {
+				if ( component.getHistory().length == 2 ) {
+					component.move('Bg2');
+				}
+			},
+		} } );
 		await waitFor( () => expect( component.getHistory() ).toHaveLength(4), { timeout: 10e3 } );
 	});
 	test( 'Auto-plays no moves as color "none"', async () => {
@@ -130,9 +129,8 @@ describe("move / playEngineMove", async () => {
 			color: 'none',
 			moveTime: 50,
 		});
-		const { component, container } = render( Chess, { props: { engine } } );
 		const onReady = vi.fn();
-		component.$on( 'ready', onReady );
+		const { component } = render( Chess, { props: { engine, onready: onReady } } );
 		expect( () => component.move('d4') ).toThrow();
 		expect( () => component.playEngineMove() ).rejects.toThrow();
 		await waitFor( () => expect(onReady).toHaveReturned(), { timeout: 10e3 } );
@@ -143,8 +141,9 @@ describe("move / playEngineMove", async () => {
 			color: 'none',
 			moveTime: 50,
 		});
-		const { component } = render( Chess, { props: { engine } } );
-		component.$on( 'ready', () => {component.playEngineMove()} );
+		const { component } = render( Chess, { props: { engine,
+			onready: () => {component.playEngineMove()},
+		} } );
 		await waitFor( () => expect( component.getHistory() ).toHaveLength(1), { timeout: 10e3 } );
 	}, 10e3 );
 	test( "move() while engine is searching stops search and performs move", async () => {
@@ -153,7 +152,6 @@ describe("move / playEngineMove", async () => {
 			color: 'none',
 			moveTime: 300,
 		});
-		const { component, container } = render( Chess, { props: { engine } } );
 		const onReady = vi.fn( async () => {
 			expect( engine.isSearching() ).toBeFalsy();
 			component.playEngineMove();
@@ -161,14 +159,13 @@ describe("move / playEngineMove", async () => {
 			component.move('d4');
 		});
 		const onMove = vi.fn();
-		component.$on( 'ready', onReady );
-		component.$on( 'move', onMove );
+		const { component } = render( Chess, { props: { engine, onready: onReady, onmove: onMove } } );
 		expect( onMove ).toHaveBeenCalledTimes(0);
 		await waitFor( () => expect(onReady).toHaveReturned(), { timeout: 10e3 } );
 		expect( onMove ).toHaveBeenCalledTimes(1);
 		await new Promise(resolve => setTimeout(resolve, 500));
 		expect( onMove ).toHaveBeenCalledTimes(1);
-		expect( component.fen ).toEqual( 'rnbqkbnr/pppppppp/8/8/3P4/8/PPP1PPPP/RNBQKBNR b KQkq - 0 1' );
+		expect( component.getHistory() ).toEqual( ['d4'] );
 	}, 15e3);
 }, 30e3);
 

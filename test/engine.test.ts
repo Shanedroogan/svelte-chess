@@ -34,9 +34,9 @@ describe("basic engine tests", () => {
 	} );
 
 	test("engine spends approx. moveTime ms on a move (500ms)", async () => {
-		const start = new Date();
+		const start = Date.now();
 		await engine.getMove( INITIAL_FEN );
-		const timeTakenMs = new Date() - start;
+		const timeTakenMs = Date.now() - start;
 		expect( timeTakenMs ).toBeGreaterThan( 400 );
 		expect( timeTakenMs ).toBeLessThan( 600 );
 	});
@@ -52,7 +52,7 @@ describe("basic engine tests", () => {
 	});
 
 	test( "stopSearch() stops search", async () => {
-		const movePromise = engine.getMove( INITIAL_FEN );
+		engine.getMove( INITIAL_FEN ).catch( () => {} ); // search stopped before resolving
 		await new Promise(resolve => setTimeout(resolve, 100));
 		expect( engine.isSearching() ).toBeTruthy();
 		expect( engine['state'] ).toEqual( 'searching' ); // test private prop 
@@ -72,7 +72,7 @@ describe("basic engine tests", () => {
 	});
 });
 
-test.each(['w','b','both','none'])("getColor returns %s", (color) => {
+test.each(['w','b','both','none'] as const)("getColor returns %s", (color) => {
 	const engine = new Engine({ color });
 	expect( engine.getColor() ).toEqual( color );
 });

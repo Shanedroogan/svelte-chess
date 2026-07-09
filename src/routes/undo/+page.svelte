@@ -1,13 +1,13 @@
 <script lang="ts">
 	import Chess from '$lib/Chess.svelte';
-	let chess: Chess;
+	let chess: ReturnType<typeof Chess> | undefined;
 </script>
 
 <div style="max-width:512px;margin:0 auto;">
 	<Chess bind:this={chess} />
-	<button on:click={()=>chess?.reset()}>Reset board</button>
-	<button on:click={()=>chess?.undo()}>Undo</button>
-	<button on:click={()=>chess?.toggleOrientation()}>Flip board</button>
+	<button onclick={()=>chess?.reset()}>Reset board</button>
+	<button onclick={()=>chess?.undo()}>Undo</button>
+	<button onclick={()=>chess?.toggleOrientation()}>Flip board</button>
 </div>
 
 <style>

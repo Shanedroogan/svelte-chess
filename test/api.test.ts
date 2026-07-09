@@ -1,18 +1,15 @@
 import {describe, expect} from 'vitest';
-import { Api } from '../src/lib/api.js';
-import { Chessground } from 'svelte-chessground';
+import { Api, type Square, type PieceSymbol, type Move, type GameOver } from '../src/lib/api.js';
+import type { Api as CgApi } from '@lichess-org/chessground/api';
 
-// Mock svelte-chessground: Chessground changes are *not* tested here
-vi.mock('svelte-chessground', () => {
-	const Chessground = vi.fn();
-	Chessground.prototype.move = vi.fn();
-	Chessground.prototype.set = vi.fn();
-	return { Chessground };
-});
+// Stub the chessground Api: Chessground changes are *not* tested here
+function mockCg(): CgApi {
+	return { move: vi.fn(), set: vi.fn() } as unknown as CgApi;
+}
 
 let api: Api;
 beforeEach(async () => {
-	api = new Api( new Chessground() );
+	api = new Api( mockCg() );
 	await api.init();
 } );
 
@@ -64,14 +61,14 @@ describe("board manipulation", () => {
 		api.move('Bc4');
 		expect( api.fen() ).toEqual( 'rnbqkbnr/pppp1ppp/8/4p3/2B1P3/8/PPPP1PPP/RNBQK1NR b KQkq - 1 2' );
 		move = api.undo();
-		expect( move.san ).toEqual( 'Bc4' );
+		expect( move!.san ).toEqual( 'Bc4' );
 		expect( api.fen() ).toEqual( 'rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2' );
 		api.move('Qh5');
 		expect( api.fen() ).toEqual( 'rnbqkbnr/pppp1ppp/8/4p2Q/4P3/8/PPPP1PPP/RNB1KBNR b KQkq - 1 2' );
 		move = api.undo();
-		expect( move.san ).toEqual( 'Qh5' );
+		expect( move!.san ).toEqual( 'Qh5' );
 		move = api.undo();
-		expect( move.san ).toEqual( 'e5' );
+		expect( move!.san ).toEqual( 'e5' );
 		expect( api.fen() ).toEqual( 'rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1' );
 	} );
 });
@@ -170,15 +167,15 @@ describe("board state", () => {
 		api.move('Qxf7');
 		const history = api.history({verbose:true});
 		expect( history ).toHaveLength(9);
-		expect( history[0] ).toContain( { check: false, checkmate: false } );
-		expect( history[1] ).toContain( { check: false, checkmate: false } );
-		expect( history[2] ).toContain( { check: false, checkmate: false } );
-		expect( history[3] ).toContain( { check: false, checkmate: false } );
-		expect( history[4] ).toContain( { check: false, checkmate: false } );
-		expect( history[5] ).toContain( { check: true,  checkmate: false } );
-		expect( history[6] ).toContain( { check: false, checkmate: false } );
-		expect( history[7] ).toContain( { check: false, checkmate: false } );
-		expect( history[8] ).toContain( { check: true,  checkmate: true  } );
+		expect( history[0] ).toMatchObject( { check: false, checkmate: false } );
+		expect( history[1] ).toMatchObject( { check: false, checkmate: false } );
+		expect( history[2] ).toMatchObject( { check: false, checkmate: false } );
+		expect( history[3] ).toMatchObject( { check: false, checkmate: false } );
+		expect( history[4] ).toMatchObject( { check: false, checkmate: false } );
+		expect( history[5] ).toMatchObject( { check: true,  checkmate: false } );
+		expect( history[6] ).toMatchObject( { check: false, checkmate: false } );
+		expect( history[7] ).toMatchObject( { check: false, checkmate: false } );
+		expect( history[8] ).toMatchObject( { check: true,  checkmate: true  } );
 	} );
 
 	test("board()", () => {
@@ -275,7 +272,7 @@ describe("game end", () => {
 
 describe("start from FEN", () => {
 	test( "start from FEN", async () => {
-		api = new Api( new Chessground(), 'rnbqkb1r/1p2pppp/p2p1n2/8/3NP3/2N1B3/PPP2PPP/R2QKB1R b KQkq - 1 6' );
+		api = new Api( mockCg(), 'rnbqkb1r/1p2pppp/p2p1n2/8/3NP3/2N1B3/PPP2PPP/R2QKB1R b KQkq - 1 6' );
 		await api.init();
 		expect( api.moveNumber() ).toEqual(6);
 		expect( api.turn() ).toEqual('b');
@@ -286,13 +283,17 @@ describe("start from FEN", () => {
 
 describe("callbacks are called", async () => {
 	const fen = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
-	let api, stateChangeCallback, promotionCallback, moveCallback, gameOverCallback;
+	let api: Api,
+		stateChangeCallback: ReturnType<typeof vi.fn<(api: Api) => void>>,
+		promotionCallback: ReturnType<typeof vi.fn<(sq: Square) => Promise<PieceSymbol>>>,
+		moveCallback: ReturnType<typeof vi.fn<(move: Move) => void>>,
+		gameOverCallback: ReturnType<typeof vi.fn<(gameOver: GameOver) => void>>;
 	beforeEach( async () => {
-		stateChangeCallback = vi.fn();
-		promotionCallback = vi.fn();
-		moveCallback = vi.fn();
-		gameOverCallback = vi.fn();
-		api = new Api( new Chessground(), fen, stateChangeCallback, promotionCallback, moveCallback, gameOverCallback );
+		stateChangeCallback = vi.fn<(api: Api) => void>();
+		promotionCallback = vi.fn<(sq: Square) => Promise<PieceSymbol>>();
+		moveCallback = vi.fn<(move: Move) => void>();
+		gameOverCallback = vi.fn<(gameOver: GameOver) => void>();
+		api = new Api( mockCg(), fen, stateChangeCallback, promotionCallback, moveCallback, gameOverCallback );
 		await api.init();
 	});
 	test( 'moveCallback is called with move object', () => {

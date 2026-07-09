@@ -1,6 +1,6 @@
 <script lang="ts">
-	import Chess, { Engine, type UciEvent } from '$lib/Chess.svelte';
-	let chess: Chess;
+	import Chess, { Engine } from '$lib/Chess.svelte';
+	let chess: ReturnType<typeof Chess> | undefined;
 
 	// Note: stockfish.js must be manually downloaded (see Readme)
 	const engine = new Engine({
@@ -10,23 +10,23 @@
 	});
 
 	// Output all UCI messages
-	let uciMessages: { text: string, type: string }[] = [];
-	function handleUci( event: UciEvent ) {
+	let uciMessages: { text: string, type: string }[] = $state([]);
+	function handleUci( message: string ) {
 		uciMessages = [ {
-			text: event.detail,
-			type: event.detail.split(' ')[0],
+			text: message,
+			type: message.split(' ')[0],
 		}, ...uciMessages ];
 	}
 </script>
 
 <div class="container">
 	<div class="board">
-		<Chess bind:this={chess} orientation="b" on:uci={handleUci} {engine} />
-		<button on:click={()=>chess?.playEngineMove()}>Play engine move</button>
+		<Chess bind:this={chess} orientation="b" onuci={handleUci} {engine} />
+		<button onclick={()=>chess?.playEngineMove()}>Play engine move</button>
 	</div>
 	<div class="uci">
 		<div class="header">UCI messages from Stockfish</div>
-		{#each uciMessages as message}
+		{#each uciMessages as message (message)}
 			<div class="message {message.type}">{message.text}</div>
 		{/each}
 	</div>

@@ -1,6 +1,12 @@
 <script lang="ts">
 	import Chess, { type Color } from '$lib/Chess.svelte';
-	let fen:string, moveNumber:number, turn:Color, history:string[], inCheck:boolean;
+	// Svelte 5: bound props with fallback values may not be bound to undefined,
+	// so the initial values are provided here.
+	let fen: string = $state('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'),
+		moveNumber: number = $state(0),
+		turn: Color = $state('w'),
+		history: string[] = $state([]),
+		inCheck: boolean = $state(false);
 </script>
 
 <div style="max-width:512px;margin:0 auto;">

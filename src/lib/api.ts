@@ -1,4 +1,4 @@
-import type { Chessground } from 'svelte-chessground';
+import type { Api as CgApi } from '@lichess-org/chessground/api';
 import { Chess as ChessJS, SQUARES } from 'chess.js';
 import type { Square, PieceSymbol, Color, Move as CjsMove } from 'chess.js';
 export type { Square, PieceSymbol, Color };
@@ -19,12 +19,12 @@ export class Api {
 	private gameIsOver = false;
 	private initialised = false;
 	constructor(
-		private cg: Chessground,
+		private cg: CgApi,
 		fen = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
-		private stateChangeCallback: (api:Api) => void = (api)=>{}, // called when the game state (not visuals) changes
-		private promotionCallback: (sq:Square) => Promise<PieceSymbol> = async (sq)=>'q', // called before promotion
-		private moveCallback: (move:Move) => void = (m)=>{}, // called after move
-		private gameOverCallback: ( gameOver:GameOver ) => void = (go)=>{}, // called after game-ending move
+		private stateChangeCallback: (api:Api) => void = ()=>{}, // called when the game state (not visuals) changes
+		private promotionCallback: (sq:Square) => Promise<PieceSymbol> = async ()=>'q', // called before promotion
+		private moveCallback: (move:Move) => void = ()=>{}, // called after move
+		private gameOverCallback: ( gameOver:GameOver ) => void = ()=>{}, // called after game-ending move
 		private _orientation: Color = 'w',
 		private engine: Engine | undefined = undefined,
 	) {
@@ -113,7 +113,7 @@ export class Api {
 	}
 
 	private _moveIsPromotion( orig: Square, dest: Square ): boolean {
-		return this.chessJS.get(orig).type === 'p' && ( dest.charAt(1) == '1' || dest.charAt(1) == '8' );
+		return this.chessJS.get(orig)?.type === 'p' && ( dest.charAt(1) == '1' || dest.charAt(1) == '8' );
 	}
 
 	// Make a move programmatically
@@ -325,7 +325,8 @@ export class Api {
 		const lastSanChar = cjsMove.san.slice(-1);
 		const checkmate = lastSanChar === '#';
 		const check     = lastSanChar === '+' || checkmate;
-		return { ...cjsMove, check, checkmate };
+		// Object.assign (rather than spread) to preserve the chess.js Move class methods
+		return Object.assign( cjsMove, { check, checkmate } );
 	}
 
 }
