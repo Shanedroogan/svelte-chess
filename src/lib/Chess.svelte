@@ -88,6 +88,16 @@
 		if ( ! api ) throw new Error( 'component not mounted yet' );
 		api.toggleOrientation();
 	}
+	// Re-measure the board bounds and re-render. Chessground caches its bounds
+	// from getBoundingClientRect() and only re-measures when the container's
+	// layout size changes; transform-based animations (e.g. a Svelte scale
+	// transition) skew the measurement without ever triggering that, so
+	// consumers animating the board's container should call this when the
+	// animation settles.
+	export function redrawBoard(): void {
+		if ( ! board ) throw new Error( 'component not mounted yet' );
+		board.getApi().redrawAll();
+	}
 	export async function playEngineMove(): Promise<void> {
 		if ( ! api ) throw new Error( 'component not mounted yet' );
 		return api.playEngineMove();

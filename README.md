@@ -151,16 +151,27 @@ To inspect Stockfish's current evaluation and other engine details, you can list
 
 ### Styling
 
-The stylesheet shipped with Chessground is used by default. To restyle the 
-board, pass the `class` prop and import a stylesheet.
+The board and piece styles from Chessground are bundled with the component
+and applied by default. They are pinned at CSS specificity (0,2,0), so broad
+theme rules in the consuming app (e.g. `body.dark * { background: ... }`)
+will not accidentally override the board.
 
-Example with custom stylesheet:
+To deliberately restyle the board, pass the `class` prop and include the
+runtime `cg-wrap` class in your selectors so they outrank the defaults:
 
     <script>
         import { Chess } from 'svelte-chess';
     </script>
     <link rel="stylesheet" href="/my-style.css" />
     <Chess class="my-class" />
+
+    /* my-style.css */
+    .my-class.cg-wrap cg-board {
+        background-image: url('...');
+    }
+    .my-class.cg-wrap piece.pawn.white {
+        background-image: url('...');
+    }
 
 A sample stylesheet can be found in [/static/style-paper.css](https://github.com/gtim/svelte-chess/blob/main/static/style-paper.css).
 
